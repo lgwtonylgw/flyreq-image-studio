@@ -130,6 +130,8 @@ Built from [tianjiangqiji/nova-image-studio](https://github.com/tianjiangqiji/no
 <details>
 <summary><strong>Docker Compose deployment</strong></summary>
 
+For GitHub Actions builds and server deployments from this repository, see [GHCR deployment and rollback](deploy-ghcr.md). The quick start below uses the upstream image and configuration.
+
 ### Requirements
 
 - Docker 20.10+

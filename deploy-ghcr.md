@@ -1,0 +1,79 @@
+# GitHub Actions 构建与服务器部署
+
+## 1. 在 GitHub 构建镜像
+
+把源码和 `.github/workflows/publish-ghcr.yml` 推送到 GitHub。首次使用时，工作流文件需要存在于仓库默认分支。进入 **Actions → Build FlyReq Image Studio image for server → Run workflow**：
+
+- `source_ref` 填写要部署的分支、标签或提交 SHA，默认 `master`。
+- 在服务器执行 `uname -m`。`x86_64` 选择 `amd64`，`aarch64` 选择 `arm64`。
+
+构建成功后，在该次运行的 **Summary** 复制整条 `bash deploy-image.sh deploy 'ghcr.io/…@sha256:…'` 命令。工作流用仓库内置的 `GITHUB_TOKEN` 推送镜像，发布地址由 GitHub 仓库名生成。每次部署使用本次构建的 digest。
+
+## 2. 首次准备服务器
+
+使用 Bash、Docker Compose v2.24.4 或更高版本以及 `flock`（Ubuntu/Debian 的 `util-linux` 包）。检查 `sudo ss -ltnp 'sport = :3002'` 的结果，确认宿主机端口可用。使用同一个具有 Docker 权限的 Linux 用户拉取并部署镜像。
+
+创建 `/data/flyreq-image-studio`，从当前仓库上传以下文件。已有生产配置时保留服务器上的版本。
+
+| 仓库文件 | 服务器部署目录内的路径 |
+| --- | --- |
+| `docker-compose.yml` | `docker-compose.yml` |
+| `deploy-image.sh` | `deploy-image.sh` |
+| `backend/.env.example` | `.env` |
+| `backend/prompts.json` | `prompts.json` |
+| `backend/blacklist.json` | `blacklist.json` |
+| `scripts/flyreq-nginx.conf.template` | `scripts/flyreq-nginx.conf.template` |
+
+```bash
+cd /data/flyreq-image-studio
+chmod 600 .env
+mkdir -p data logs
+```
+
+应用配置写在 `.env`，容器固定监听 `3001`。宿主机默认绑定 `127.0.0.1:3002`，需要换端口时在 `.env` 设置 `FLYREQ_HOST_PORT`，并同步更新 Nginx 的上游端口。部署脚本按本次传入的 digest 给 Compose 设置 `FLYREQ_IMAGE`。
+
+如果 GHCR 镜像包是私有的，使用有该包访问权及 `read:packages` 权限的 classic PAT 登录。下面命令通过交互提示读取令牌。
+
+```bash
+read -rsp 'GHCR token: ' flyreq_ghcr_token
+printf '\n'
+printf '%s' "$flyreq_ghcr_token" | docker login ghcr.io -u lgwtonylgw --password-stdin
+unset flyreq_ghcr_token
+```
+
+SQLite、图片和视频保存在 `data/`，日志保存在 `logs/`。如果从已有的旧容器迁移，并且它曾把视频写到容器内的默认目录，在替换旧容器之前把旧文件复制到持久化目录：
+
+```bash
+mkdir -p data/flyreq-videos
+docker cp flyreq-image-studio:/app/backend/flyreq-videos/. ./data/flyreq-videos/
+```
+
+## 3. 部署与回滚
+
+进入 `/data/flyreq-image-studio`，执行 Actions Summary 里的完整命令。脚本在更新前完成下载及架构检查，等待容器通过健康检查后记录该镜像。部署完成后检查状态和页面：
+
+```bash
+bash deploy-image.sh status
+curl -fsS -o /dev/null http://127.0.0.1:3002/api/flyreq/config
+curl -fsS -o /dev/null http://127.0.0.1:3002/
+```
+
+后续升级重复构建和部署。需要恢复时运行 `bash deploy-image.sh rollback`。如果最近一次升级失败，脚本恢复上一次健康镜像。如果当前运行的是最近一次成功部署的镜像，脚本切回上一版健康镜像。镜像记录写在 `.release/images`，随部署目录保留。回滚仅切换应用镜像。升级前备份 `data/`，回滚前确认旧版程序兼容当前数据。
+
+## 4. 配置 Nginx 和 HTTPS
+
+将子域名指向服务器。以下命令适用于使用 `/etc/nginx/conf.d/` 的宿主机 Nginx，需要 `envsubst`（Ubuntu/Debian 的 `gettext-base` 包）和 Certbot 的 Nginx 插件。先根据 `.env` 里实际使用的宿主机端口设置变量，再生成站点配置。模板会保留 Nginx 自己的 `$host` 等变量。
+
+```bash
+cd /data/flyreq-image-studio
+export FLYREQ_DOMAIN=studio.tokenaigate.com
+export FLYREQ_HOST_PORT=3002
+envsubst '${FLYREQ_DOMAIN} ${FLYREQ_HOST_PORT}' < scripts/flyreq-nginx.conf.template \
+  > flyreq-image-studio.conf \
+  && sudo install -m 644 flyreq-image-studio.conf /etc/nginx/conf.d/flyreq-image-studio.conf \
+  && sudo nginx -t \
+  && sudo systemctl reload nginx \
+  && sudo certbot --nginx -d "$FLYREQ_DOMAIN"
+```
+
+部署后打开域名验证页面，并在生成任务时检查浏览器网络面板的 `/api/flyreq/ws` 是否返回 `101 Switching Protocols`。通过一次参考图上传验证请求体限制和图片生成链路。

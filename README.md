@@ -135,6 +135,8 @@ FlyReq Image Studio（简称 FlyReq Image）是一个面向个人与团队的 AI
 <details>
 <summary><strong>🐳 Docker Compose 部署</strong></summary>
 
+使用本仓库的 GitHub Actions 构建 GHCR 镜像并部署到服务器时，参见 [镜像部署与回滚](deploy-ghcr.md)。下面的快速安装命令使用上游发布的镜像和配置。
+
 ### 前置要求
 
 - Docker 20.10+

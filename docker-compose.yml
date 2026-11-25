@@ -2,30 +2,53 @@ name: flyreq-image-studio
 
 services:
   flyreq-image-studio:
-    image: ghcr.io/doudou770/flyreq-image-studio:latest
+    image: ${FLYREQ_IMAGE:?Set FLYREQ_IMAGE to the published image digest}
     container_name: flyreq-image-studio
-    # env_file:
-    #   - .env
     environment:
       NODE_ENV: production
+      HOSTNAME: 0.0.0.0
+      PORT: "3001"
       FLYREQ_TASK_DB: /app/backend/data/flyreq-tasks.sqlite
       FLYREQ_IMAGE_DIR: /app/backend/data/flyreq-images
+      FLYREQ_VIDEO_DIR: /app/backend/data/flyreq-videos
       FLYREQ_LOG_DIR: /app/backend/logs/application
       FLYREQ_IMAGE_UPSTREAM_LOG_DIR: /app/backend/logs/image-upstream
       FLYREQ_VIDEO_UPSTREAM_LOG_DIR: /app/backend/logs/video-upstream
       TZ: ${TZ:-Asia/Shanghai}
     ports:
-      - "3001:3001"
+      - "127.0.0.1:${FLYREQ_HOST_PORT:-3002}:3001"
     volumes:
       - ./data:/app/backend/data
       - ./logs:/app/backend/logs
-      - ./blacklist.json:/app/backend/blacklist.json:ro
-      - ./prompts.json:/app/backend/prompts.json:ro
-      - ./.env:/app/.env:ro
-#    networks:
-#      - 1panel-network
+      - type: bind
+        source: ./blacklist.json
+        target: /app/backend/blacklist.json
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ./prompts.json
+        target: /app/backend/prompts.json
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ./.env
+        target: /app/.env
+        read_only: true
+        bind:
+          create_host_path: false
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - >-
+          fetch('http://127.0.0.1:3001/api/flyreq/config', { signal: AbortSignal.timeout(3000) })
+          .then(response => { if (!response.ok) process.exit(1); })
+          .catch(() => process.exit(1));
+      interval: 5s
+      timeout: 4s
+      retries: 6
+      start_period: 20s
     restart: unless-stopped
-
-#networks:
-#  1panel-network:
-#    external: true
