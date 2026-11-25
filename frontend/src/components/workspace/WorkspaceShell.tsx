@@ -76,6 +76,13 @@ export function WorkspaceShell() {
   useEffect(() => subscribeImageActionToasts(detail => showToast(detail.message, detail.type)), [showToast]);
 
   useEffect(() => {
+    // 从外部入口打开 #canvas 时，在页面完成水合后选中画布标签。
+    if (window.location.hash !== '#canvas') return;
+    const frame = window.requestAnimationFrame(() => setActiveTab('canvas'));
+    return () => window.cancelAnimationFrame(frame);
+  }, []);
+
+  useEffect(() => {
     if (externalConfigParsedRef.current) return;
 
     const url = new URL(window.location.href);

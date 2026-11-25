@@ -62,12 +62,20 @@ curl -fsS -o /dev/null http://127.0.0.1:3002/
 
 ## 4. 配置 Nginx 和 HTTPS
 
-将子域名指向服务器。以下命令适用于使用 `/etc/nginx/conf.d/` 的宿主机 Nginx，需要 `envsubst`（Ubuntu/Debian 的 `gettext-base` 包）和 Certbot 的 Nginx 插件。先根据 `.env` 里实际使用的宿主机端口设置变量，再生成站点配置。模板会保留 Nginx 自己的 `$host` 等变量。
+在 Cloudflare 的 `tokenaigate.com` 区域新增 `A` 记录，名称填 `studio`，地址填部署画布项目的服务器公网 IPv4，TTL 选 Auto。签发源站证书时先使用灰云（DNS only），确认域名已指向服务器且公网能访问源站 80 端口。证书签发成功后切换成橙云（Proxied），SSL/TLS 使用 Full (strict)，WebSockets 保持启用。
+
+以下命令适用于使用 `/etc/nginx/conf.d/` 的宿主机 Nginx，需要 `envsubst`（Ubuntu/Debian 的 `gettext-base` 包）和 Certbot 的 Nginx 插件。生成画布站点专用的 Cloudflare 信任列表后，Nginx 只接受来自这些网段的 `CF-Connecting-IP`，应用按真实访客 IP 限流。Cloudflare 更新网段后重新生成该配置并重载 Nginx。
 
 ```bash
 cd /data/flyreq-image-studio
 export FLYREQ_DOMAIN=studio.tokenaigate.com
 export FLYREQ_HOST_PORT=3002
+curl -fsS https://www.cloudflare.com/ips-v4 -o cloudflare-v4.txt \
+  && curl -fsS https://www.cloudflare.com/ips-v6 -o cloudflare-v6.txt \
+  && awk 'BEGIN { print "real_ip_header CF-Connecting-IP;" } NF { print "set_real_ip_from " $1 ";" }' \
+       cloudflare-v4.txt cloudflare-v6.txt > flyreq-cloudflare-realip.conf \
+  && sudo install -m 644 flyreq-cloudflare-realip.conf /etc/nginx/flyreq-cloudflare-realip.conf
+
 envsubst '${FLYREQ_DOMAIN} ${FLYREQ_HOST_PORT}' < scripts/flyreq-nginx.conf.template \
   > flyreq-image-studio.conf \
   && sudo install -m 644 flyreq-image-studio.conf /etc/nginx/conf.d/flyreq-image-studio.conf \
@@ -76,4 +84,4 @@ envsubst '${FLYREQ_DOMAIN} ${FLYREQ_HOST_PORT}' < scripts/flyreq-nginx.conf.temp
   && sudo certbot --nginx -d "$FLYREQ_DOMAIN"
 ```
 
-部署后打开域名验证页面，并在生成任务时检查浏览器网络面板的 `/api/flyreq/ws` 是否返回 `101 Switching Protocols`。通过一次参考图上传验证请求体限制和图片生成链路。
+部署后打开 `https://studio.tokenaigate.com/#canvas`，确认直接进入画布。生成任务时检查浏览器网络面板的 `/api/flyreq/ws` 是否返回 `101 Switching Protocols`。通过一次参考图上传验证请求体限制和图片生成链路。New API 的侧栏使用同一地址，改域名时同步更新 New API 容器的 `INFINITE_CANVAS_URL`。

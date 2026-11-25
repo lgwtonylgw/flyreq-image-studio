@@ -7,6 +7,7 @@ server {
     listen 80;
     server_name ${FLYREQ_DOMAIN};
 
+    include /etc/nginx/flyreq-cloudflare-realip.conf;
     client_max_body_size 10m;
 
     location / {
