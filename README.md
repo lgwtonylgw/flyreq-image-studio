@@ -88,7 +88,7 @@ FlyReq Image Studio（简称 FlyReq Image）是一个面向个人与团队的 AI
   <tr>
     <td width="180" align="center">
       <a href="https://flyreq.com">
-        <img src="frontend/public/icon-512.png" width="112" alt="FlyReq" />
+        FlyReq
       </a>
     </td>
     <td>
@@ -600,26 +600,28 @@ https://image.flyreq.com/zh/?provider={"type":"video","protocol":"openai","model
 | `FLYREQ_IMAGE_DIR` | 否 | `backend/flyreq-images/` | 任务产物落盘目录 |
 | `FLYREQ_REMOTE_IMAGE_MAX_BYTES` | 否 | `52428800` | 服务端下载远程生成图片的最大字节数，范围为 1024 至 209715200 |
 | `FLYREQ_BASE_URL_REWRITE_MAP` | 否 | 空 | Base URL 出站改写表；例如 `{"https://flyreq.com":"http://new-api:3000"}` |
-| `FLYREQ_OUTBOUND_USER_AGENT` | 否 | `FlyReq-Image-Studio/1.5.1` | 上游请求携带的稳定服务标识；请配置为部署方可追溯的产品名称，不要伪造浏览器或第三方服务身份 |
+| `FLYREQ_OUTBOUND_USER_AGENT` | 否 | `TokenAIGate-Image-Studio/1.5.1` | 上游请求携带的稳定服务标识；请配置为部署方可追溯的产品名称，不要伪造浏览器或第三方服务身份 |
 | `FLYREQ_FILE_LOG_ENABLED` | 否 | `true` | 是否将全部后端标准日志按日期写入文件；`false`、`0`、`no`、`off` 关闭 |
 | `FLYREQ_LOG_DIR` | 否 | `backend/logs/application` | 按日期分割的后端应用 JSONL 日志目录；Docker Compose 使用 `/app/backend/logs/application` |
-| `FLYREQ_PLATFORM_NAME` | 否 | `FlyReq Image` | 平台名称；用于页面标题、Header、设置页和 PWA 名称 |
-| `FLYREQ_PLATFORM_LOGO_URL` | 否 | `/favicon.png` | Header Logo；建议正方形且至少 `128x128`，支持 PNG/WebP/SVG |
-| `FLYREQ_PLATFORM_ICON_URL` | 否 | `/favicon.png` | 浏览器 favicon；建议使用 `48x48` PNG 或 ICO，不作为 PWA 安装图标 |
-| `FLYREQ_PWA_ICON_192_URL` | 否 | `/icon-192.png` | PWA 普通图标；必须为 `192x192` PNG |
-| `FLYREQ_PWA_ICON_512_URL` | 否 | `/icon-512.png` | PWA 高清普通图标；必须为 `512x512` PNG |
-| `FLYREQ_PWA_MASKABLE_ICON_512_URL` | 否 | `/icon-maskable-512.png` | PWA Maskable 图标；必须为 `512x512` PNG，重要内容放在中心 80% 安全区域 |
-| `FLYREQ_IMAGE_MODEL_KEY_GUIDE_TITLE` | 否 | `还没有图片模型 API Key？` | 设置页图片模型 Key 指引标题 |
-| `FLYREQ_IMAGE_MODEL_KEY_GUIDE_DESCRIPTION` | 否 | FlyReq 默认说明 | 设置页图片模型 Key 指引描述 |
-| `FLYREQ_IMAGE_MODEL_KEY_GUIDE_CTA_LABEL` | 否 | `前往 flyreq.com` | 设置页图片模型 Key 指引按钮文字 |
-| `FLYREQ_IMAGE_MODEL_KEY_GUIDE_URL` | 否 | `https://flyreq.com` | 设置页图片模型 Key 指引跳转地址 |
+| `FLYREQ_PLATFORM_NAME` | 否 | `Token AI Gate` | 平台名称；用于页面标题、Header、设置页和 PWA 名称 |
+| `FLYREQ_PLATFORM_WEBSITE_URL` | 否 | `https://tokenaigate.com` | 关于页面的官网链接 |
+| `FLYREQ_PLATFORM_REPOSITORY_URL` | 否 | `https://github.com/lgwtonylgw/flyreq-image-studio` | 关于页面的项目仓库链接 |
+| `FLYREQ_PLATFORM_LOGO_URL` | 否 | `/brand/token-ai-gate/logo.png` | Header Logo；建议正方形且至少 `128x128`，支持 PNG/WebP/SVG |
+| `FLYREQ_PLATFORM_ICON_URL` | 否 | `/brand/token-ai-gate/logo.png` | 浏览器 favicon；建议使用 `48x48` PNG 或 ICO，不作为 PWA 安装图标 |
+| `FLYREQ_PWA_ICON_192_URL` | 否 | `/brand/token-ai-gate/icon-192.png` | PWA 普通图标；必须为 `192x192` PNG |
+| `FLYREQ_PWA_ICON_512_URL` | 否 | `/brand/token-ai-gate/icon-512.png` | PWA 高清普通图标；必须为 `512x512` PNG |
+| `FLYREQ_PWA_MASKABLE_ICON_512_URL` | 否 | `/brand/token-ai-gate/icon-maskable-512.png` | PWA Maskable 图标；必须为 `512x512` PNG，重要内容放在中心 80% 安全区域 |
+| `FLYREQ_IMAGE_MODEL_KEY_GUIDE_TITLE` | 否 | 按语言显示 | 设置页图片模型 Key 指引标题 |
+| `FLYREQ_IMAGE_MODEL_KEY_GUIDE_DESCRIPTION` | 否 | 按语言显示 | 设置页图片模型 Key 指引描述 |
+| `FLYREQ_IMAGE_MODEL_KEY_GUIDE_CTA_LABEL` | 否 | 按语言显示 | 设置页图片模型 Key 指引按钮文字 |
+| `FLYREQ_IMAGE_MODEL_KEY_GUIDE_URL` | 否 | `https://tokenaigate.com/keys` | 设置页图片模型 Key 指引跳转地址 |
 | `FLYREQ_DEFAULT_IMAGE_MODEL_KEY` | 否 | `flyreq-gpt-image-2` | 首次默认图片模型的稳定内部 Key |
-| `FLYREQ_DEFAULT_IMAGE_MODEL_NAME` | 否 | `FlyReq` | 首次默认图片模型的显示名称 |
+| `FLYREQ_DEFAULT_IMAGE_MODEL_NAME` | 否 | `Token AI Gate` | 首次默认图片模型的显示名称 |
 | `FLYREQ_DEFAULT_IMAGE_MODEL_PROTOCOL` | 否 | `openai` | 首次默认图片模型协议：`openai` 或 `google` |
 | `FLYREQ_DEFAULT_VIDEO_MODEL_KEY` | 否 | `flyreq-sora-2` | 首次默认视频模型的稳定内部 Key |
-| `FLYREQ_DEFAULT_VIDEO_MODEL_NAME` | 否 | `FlyReq` | 首次默认视频模型的显示名称 |
+| `FLYREQ_DEFAULT_VIDEO_MODEL_NAME` | 否 | `Token AI Gate` | 首次默认视频模型的显示名称 |
 | `FLYREQ_DEFAULT_VIDEO_MODEL_PROTOCOL` | 否 | `openai` | 首次默认视频模型协议：`new-api`、`openai` 或 `xai` |
-| `FLYREQ_DEFAULT_VIDEO_MODEL_BASE_URL` | 否 | `https://flyreq.com` | 首次默认视频模型的 Base URL |
+| `FLYREQ_DEFAULT_VIDEO_MODEL_BASE_URL` | 否 | `https://api.tokenaigate.com` | 首次默认视频模型的 Base URL |
 | `FLYREQ_DEFAULT_VIDEO_MODEL_MODEL_ID` | 否 | `sora-2` | 首次默认视频模型的上游模型 ID |
 | `FLYREQ_VIDEO_PROTOCOL_CONFIG_OVERRIDES` | 否 | 空 | 视频协议能力的 JSON Merge Patch 覆盖；对象递归合并，数组整体替换，`null` 删除字段 |
 | `FLYREQ_VIDEO_UPSTREAM_LOG_ENABLED` | 否 | `true` | 是否记录视频上游创建、轮询和下载阶段的每次请求与响应；`false`、`0`、`no`、`off` 关闭 |
@@ -628,7 +630,7 @@ https://image.flyreq.com/zh/?provider={"type":"video","protocol":"openai","model
 | `FLYREQ_IMAGE_UPSTREAM_LOG_ENABLED` | 否 | `true` | 是否记录图片上游生成阶段的每次请求与响应；`false`、`0`、`no`、`off` 关闭 |
 | `FLYREQ_IMAGE_UPSTREAM_LOG_MAX_CHARS` | 否 | `65536` | 单条图片上游响应正文的最大字符数，范围 `1024-1048576` |
 | `FLYREQ_IMAGE_UPSTREAM_LOG_DIR` | 否 | `backend/logs/image-upstream` | 按日期分割的图片上游 JSONL 日志目录；Docker Compose 使用 `/app/backend/logs/image-upstream` |
-| `FLYREQ_DEFAULT_IMAGE_MODEL_BASE_URL` | 否 | `https://flyreq.com` | 首次默认图片模型的 Base URL |
+| `FLYREQ_DEFAULT_IMAGE_MODEL_BASE_URL` | 否 | `https://api.tokenaigate.com` | 首次默认图片模型的 Base URL |
 | `FLYREQ_DEFAULT_IMAGE_MODEL_MODEL_ID` | 否 | 空 | 实际模型 ID；留空时使用预设模型 ID 映射 |
 | `FLYREQ_DEFAULT_IMAGE_MODEL_PRESET` | 否 | `gpt-image-2` | 内置图片预设 ID，决定模型能力边界 |
 | `FLYREQ_DEFAULT_IMAGE_MODEL_MAX_REF_IMAGES` | 否 | `16` | 最大参考图数量，范围 `1-16` |

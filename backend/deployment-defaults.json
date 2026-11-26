@@ -2,5 +2,14 @@
   "platformName": "Token AI Gate",
   "apiBaseUrl": "https://api.tokenaigate.com",
   "apiKeysUrl": "https://tokenaigate.com/keys",
+  "branding": {
+    "websiteUrl": "https://tokenaigate.com",
+    "repositoryUrl": "https://github.com/lgwtonylgw/flyreq-image-studio",
+    "logoUrl": "/brand/token-ai-gate/logo.png",
+    "iconUrl": "/brand/token-ai-gate/logo.png",
+    "pwaIcon192Url": "/brand/token-ai-gate/icon-192.png",
+    "pwaIcon512Url": "/brand/token-ai-gate/icon-512.png",
+    "pwaMaskableIcon512Url": "/brand/token-ai-gate/icon-maskable-512.png"
+  },
   "legacyApiBaseUrl": "https://flyreq.com"
 }

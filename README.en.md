@@ -87,7 +87,7 @@ Built from [tianjiangqiji/nova-image-studio](https://github.com/tianjiangqiji/no
   <tr>
     <td width="180" align="center">
       <a href="https://flyreq.com">
-        <img src="frontend/public/icon-512.png" width="112" alt="FlyReq" />
+        FlyReq
       </a>
     </td>
     <td>
@@ -532,23 +532,25 @@ The API key is briefly present in browser history, proxy logs, chat previews, an
 | `FLYREQ_IMAGE_DIR` | No | `backend/flyreq-images/` | Directory for generated image files. |
 | `FLYREQ_REMOTE_IMAGE_MAX_BYTES` | No | `52428800` | Maximum bytes downloaded for a remote generated image; range 1024 to 209715200. |
 | `FLYREQ_BASE_URL_REWRITE_MAP` | No | Empty | Outbound base-URL rewrite map, for example `{"https://flyreq.com":"http://new-api:3000"}`. |
-| `FLYREQ_OUTBOUND_USER_AGENT` | No | `FlyReq-Image-Studio/1.5.1` | Stable identifier sent upstream. Use a deployment-traceable product name; do not impersonate browsers or third-party services. |
+| `FLYREQ_OUTBOUND_USER_AGENT` | No | `TokenAIGate-Image-Studio/1.5.1` | Stable identifier sent upstream. Use a deployment-traceable product name; do not impersonate browsers or third-party services. |
 | `FLYREQ_FILE_LOG_ENABLED` | No | `true` | Mirror standard backend logs to date-split files; set `false`, `0`, `no`, or `off` to disable. |
 | `FLYREQ_LOG_DIR` | No | `backend/logs/application` | Directory for date-split backend application JSONL logs; Docker Compose uses `/app/backend/logs/application`. |
-| `FLYREQ_PLATFORM_NAME` | No | `FlyReq Image` | Product name used in the page title, header, Settings, and PWA. |
-| `FLYREQ_PLATFORM_LOGO_URL` | No | `/favicon.png` | Header logo; use a square PNG/WebP/SVG image of at least `128x128`. |
-| `FLYREQ_PLATFORM_ICON_URL` | No | `/favicon.png` | Browser favicon; use a `48x48` PNG or ICO. It is not reused as a PWA install icon. |
-| `FLYREQ_PWA_ICON_192_URL` | No | `/icon-192.png` | Standard PWA icon; must be a `192x192` PNG. |
-| `FLYREQ_PWA_ICON_512_URL` | No | `/icon-512.png` | High-resolution PWA icon; must be a `512x512` PNG. |
-| `FLYREQ_PWA_MASKABLE_ICON_512_URL` | No | `/icon-maskable-512.png` | Maskable PWA icon; must be a `512x512` PNG with important content inside the central 80% safe zone. |
-| `FLYREQ_IMAGE_MODEL_KEY_GUIDE_TITLE` | No | `Need an image model API key?` | Image-model key guide title in Settings. |
-| `FLYREQ_IMAGE_MODEL_KEY_GUIDE_DESCRIPTION` | No | FlyReq default description | Image-model key guide description in Settings. |
-| `FLYREQ_IMAGE_MODEL_KEY_GUIDE_CTA_LABEL` | No | `Visit flyreq.com` | Image-model key guide button label. |
-| `FLYREQ_IMAGE_MODEL_KEY_GUIDE_URL` | No | `https://flyreq.com` | Image-model key guide destination. |
+| `FLYREQ_PLATFORM_NAME` | No | `Token AI Gate` | Product name used in the page title, header, Settings, and PWA. |
+| `FLYREQ_PLATFORM_WEBSITE_URL` | No | `https://tokenaigate.com` | Website linked in About. |
+| `FLYREQ_PLATFORM_REPOSITORY_URL` | No | `https://github.com/lgwtonylgw/flyreq-image-studio` | Deployment repository linked in About. |
+| `FLYREQ_PLATFORM_LOGO_URL` | No | `/brand/token-ai-gate/logo.png` | Header logo; use a square PNG/WebP/SVG image of at least `128x128`. |
+| `FLYREQ_PLATFORM_ICON_URL` | No | `/brand/token-ai-gate/logo.png` | Browser favicon; use a `48x48` PNG or ICO. It is not reused as a PWA install icon. |
+| `FLYREQ_PWA_ICON_192_URL` | No | `/brand/token-ai-gate/icon-192.png` | Standard PWA icon; must be a `192x192` PNG. |
+| `FLYREQ_PWA_ICON_512_URL` | No | `/brand/token-ai-gate/icon-512.png` | High-resolution PWA icon; must be a `512x512` PNG. |
+| `FLYREQ_PWA_MASKABLE_ICON_512_URL` | No | `/brand/token-ai-gate/icon-maskable-512.png` | Maskable PWA icon; must be a `512x512` PNG with important content inside the central 80% safe zone. |
+| `FLYREQ_IMAGE_MODEL_KEY_GUIDE_TITLE` | No | Localized default | Image-model key guide title in Settings. |
+| `FLYREQ_IMAGE_MODEL_KEY_GUIDE_DESCRIPTION` | No | Localized default | Image-model key guide description in Settings. |
+| `FLYREQ_IMAGE_MODEL_KEY_GUIDE_CTA_LABEL` | No | Localized default | Image-model key guide button label. |
+| `FLYREQ_IMAGE_MODEL_KEY_GUIDE_URL` | No | `https://tokenaigate.com/keys` | Image-model key guide destination. |
 | `FLYREQ_DEFAULT_IMAGE_MODEL_KEY` | No | `flyreq-gpt-image-2` | Stable internal key for the first default image model. |
-| `FLYREQ_DEFAULT_IMAGE_MODEL_NAME` | No | `FlyReq` | Display name of the first default image model. |
+| `FLYREQ_DEFAULT_IMAGE_MODEL_NAME` | No | `Token AI Gate` | Display name of the first default image model. |
 | `FLYREQ_DEFAULT_IMAGE_MODEL_PROTOCOL` | No | `openai` | First default image-model protocol: `openai` or `google`. |
-| `FLYREQ_DEFAULT_IMAGE_MODEL_BASE_URL` | No | `https://flyreq.com` | Base URL of the first default image model. |
+| `FLYREQ_DEFAULT_IMAGE_MODEL_BASE_URL` | No | `https://api.tokenaigate.com` | Base URL of the first default image model. |
 | `FLYREQ_DEFAULT_IMAGE_MODEL_MODEL_ID` | No | Empty | Actual model ID. When blank, the preset model-ID mapping is used. |
 | `FLYREQ_DEFAULT_IMAGE_MODEL_PRESET` | No | `gpt-image-2` | Built-in image preset ID, which defines the capability boundary. |
 | `FLYREQ_DEFAULT_IMAGE_MODEL_MAX_REF_IMAGES` | No | `16` | Maximum reference images, from 1 to 16. |
@@ -557,9 +559,9 @@ The API key is briefly present in browser history, proxy logs, chat previews, an
 | `FLYREQ_DEFAULT_IMAGE_MODEL_SUPPORTS_TEMPERATURE` | No | `false` | Whether the Google image model supports `temperature` by default. |
 | `FLYREQ_DEFAULT_IMAGE_MODEL_STREAM_IMAGES` | No | `true` | Enables streaming image requests for OpenAI GPT Image 2 by default. |
 | `FLYREQ_DEFAULT_VIDEO_MODEL_KEY` | No | `flyreq-sora-2` | Stable internal key for the first default video model. |
-| `FLYREQ_DEFAULT_VIDEO_MODEL_NAME` | No | `FlyReq` | Display name of the first default video model. |
+| `FLYREQ_DEFAULT_VIDEO_MODEL_NAME` | No | `Token AI Gate` | Display name of the first default video model. |
 | `FLYREQ_DEFAULT_VIDEO_MODEL_PROTOCOL` | No | `openai` | First default video-model protocol: `new-api`, `openai`, or `xai`. |
-| `FLYREQ_DEFAULT_VIDEO_MODEL_BASE_URL` | No | `https://flyreq.com` | Base URL of the first default video model. |
+| `FLYREQ_DEFAULT_VIDEO_MODEL_BASE_URL` | No | `https://api.tokenaigate.com` | Base URL of the first default video model. |
 | `FLYREQ_DEFAULT_VIDEO_MODEL_MODEL_ID` | No | `sora-2` | Upstream model ID of the first default video model. |
 | `FLYREQ_VIDEO_PROTOCOL_CONFIG_OVERRIDES` | No | Empty | JSON Merge Patch for video protocol capabilities; objects merge recursively, arrays replace, and `null` deletes a field. |
 | `FLYREQ_VIDEO_UPSTREAM_LOG_ENABLED` | No | `true` | Logs every video-upstream request and response during creation, polling, and download. Set `false`, `0`, `no`, or `off` to disable it. |

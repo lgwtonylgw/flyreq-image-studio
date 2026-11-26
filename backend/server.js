@@ -61,11 +61,7 @@ const LIMIT_ERROR_MESSAGES = {
 };
 const DEFAULT_PLATFORM_BRANDING = {
   platformName: deploymentDefaults.platformName,
-  logoUrl: '/favicon.png',
-  iconUrl: '/favicon.png',
-  pwaIcon192Url: '/icon-192.png',
-  pwaIcon512Url: '/icon-512.png',
-  pwaMaskableIcon512Url: '/icon-maskable-512.png',
+  ...deploymentDefaults.branding,
   platformVersion: process.env.APP_VERSION || require(path.join(__dirname, '..', 'package.json')).version || '0.0.0',
 };
 const DEFAULT_IMAGE_MODEL_DEPLOYMENT_CONFIG = {
@@ -104,7 +100,7 @@ const BUILTIN_IMAGE_PRESET_IDS = new Set([
   'gemini-2.5-flash-image', 'gemini-3-pro-image-preview', 'gemini-3.1-flash-image-preview',
   'gemini-3.1-flash-lite-image', 'gpt-image-2', 'grok-imagine-image', 'grok-imagine-image-quality',
 ]);
-const DEFAULT_OUTBOUND_USER_AGENT = 'FlyReq-Image-Studio/1.5.1';
+const DEFAULT_OUTBOUND_USER_AGENT = 'TokenAIGate-Image-Studio/1.5.1';
 
 function parseEnvFile(filePath) {
   if (!fs.existsSync(filePath)) return {};
@@ -235,7 +231,9 @@ function resolveOutboundUserAgent(env = getRuntimeEnv()) {
   const configured = sanitizeOutboundHeaderValue(String(env.FLYREQ_OUTBOUND_USER_AGENT || ''))
     .trim()
     .slice(0, 256);
-  return configured || DEFAULT_OUTBOUND_USER_AGENT;
+  return configured && !/^FlyReq-Image-Studio\/(?:1\.5\.1|3\.1\.1)$/.test(configured)
+    ? configured
+    : DEFAULT_OUTBOUND_USER_AGENT;
 }
 
 /**
@@ -1096,14 +1094,15 @@ function getCenteredAspectCrop(width, height, aspectRatio) {
 }
 
 /**
- * 校验品牌图片地址，只允许站内绝对路径或 HTTP(S) 资源地址。
- * @param value 环境变量中读取到的品牌图片地址。
+ * 校验品牌资源和链接地址，只允许站内绝对路径或 HTTP(S) 地址。
+ * @param value 环境变量中读取到的品牌地址。
  * @param fallback 配置缺失或地址无效时使用的默认地址。
+ * @param legacyUrl 应迁移到新地址的旧版内置路径。
  * @returns 可安全下发给浏览器加载的图片地址。
  */
-function normalizeBrandAssetUrl(value, fallback) {
+function normalizeBrandAssetUrl(value, fallback, legacyUrl) {
   const normalized = String(value || '').trim();
-  if (!normalized) return fallback;
+  if (!normalized || normalized === legacyUrl) return fallback;
   if (normalized.startsWith('/') && !normalized.startsWith('//')) return normalized;
   try {
     const parsed = new URL(normalized);
@@ -1122,11 +1121,13 @@ function resolvePlatformBranding(env = getRuntimeEnv()) {
   const configuredName = String(env.FLYREQ_PLATFORM_NAME || '').trim().slice(0, 120);
   return {
     platformName: configuredName && configuredName !== 'FlyReq Image' ? configuredName : DEFAULT_PLATFORM_BRANDING.platformName,
-    logoUrl: normalizeBrandAssetUrl(env.FLYREQ_PLATFORM_LOGO_URL, DEFAULT_PLATFORM_BRANDING.logoUrl),
-    iconUrl: normalizeBrandAssetUrl(env.FLYREQ_PLATFORM_ICON_URL, DEFAULT_PLATFORM_BRANDING.iconUrl),
-    pwaIcon192Url: normalizeBrandAssetUrl(env.FLYREQ_PWA_ICON_192_URL, DEFAULT_PLATFORM_BRANDING.pwaIcon192Url),
-    pwaIcon512Url: normalizeBrandAssetUrl(env.FLYREQ_PWA_ICON_512_URL, DEFAULT_PLATFORM_BRANDING.pwaIcon512Url),
-    pwaMaskableIcon512Url: normalizeBrandAssetUrl(env.FLYREQ_PWA_MASKABLE_ICON_512_URL, DEFAULT_PLATFORM_BRANDING.pwaMaskableIcon512Url),
+    websiteUrl: normalizeBrandAssetUrl(env.FLYREQ_PLATFORM_WEBSITE_URL, DEFAULT_PLATFORM_BRANDING.websiteUrl),
+    repositoryUrl: normalizeBrandAssetUrl(env.FLYREQ_PLATFORM_REPOSITORY_URL, DEFAULT_PLATFORM_BRANDING.repositoryUrl),
+    logoUrl: normalizeBrandAssetUrl(env.FLYREQ_PLATFORM_LOGO_URL, DEFAULT_PLATFORM_BRANDING.logoUrl, '/favicon.png'),
+    iconUrl: normalizeBrandAssetUrl(env.FLYREQ_PLATFORM_ICON_URL, DEFAULT_PLATFORM_BRANDING.iconUrl, '/favicon.png'),
+    pwaIcon192Url: normalizeBrandAssetUrl(env.FLYREQ_PWA_ICON_192_URL, DEFAULT_PLATFORM_BRANDING.pwaIcon192Url, '/icon-192.png'),
+    pwaIcon512Url: normalizeBrandAssetUrl(env.FLYREQ_PWA_ICON_512_URL, DEFAULT_PLATFORM_BRANDING.pwaIcon512Url, '/icon-512.png'),
+    pwaMaskableIcon512Url: normalizeBrandAssetUrl(env.FLYREQ_PWA_MASKABLE_ICON_512_URL, DEFAULT_PLATFORM_BRANDING.pwaMaskableIcon512Url, '/icon-maskable-512.png'),
     platformVersion: DEFAULT_PLATFORM_BRANDING.platformVersion,
   };
 }
@@ -3739,7 +3740,7 @@ if (storageReady) {
  */
 function handleServerListenError(error) {
   if (error.code === 'EADDRINUSE') {
-    console.error(`[server] 启动失败：端口 ${PORT} 已被其他进程占用。请停止旧的 FlyReq Image 实例，或通过 PORT 环境变量改用其他端口。`);
+    console.error(`[server] 启动失败：端口 ${PORT} 已被其他进程占用。请停止旧的画布实例，或通过 PORT 环境变量改用其他端口。`);
   } else if (error.code === 'EACCES') {
     console.error(`[server] 启动失败：没有权限监听 ${HOSTNAME}:${PORT}，请检查端口权限或改用其他端口。`);
   } else {
@@ -3792,7 +3793,7 @@ const startServer = () => {
   httpServer.listen(PORT, HOSTNAME, () => {
     const localUrl = `http://localhost:${PORT}`;
     const listenUrl = `http://${HOSTNAME}:${PORT}`;
-    console.log(`FlyReq Image server ready on ${localUrl}`);
+    console.log(`${resolvePlatformBranding().platformName} server ready on ${localUrl}`);
     if (HOSTNAME !== 'localhost' && HOSTNAME !== '127.0.0.1') {
       console.log(`Listening on ${listenUrl}`);
     }

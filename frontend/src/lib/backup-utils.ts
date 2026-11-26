@@ -2,6 +2,7 @@
 
 import { zipSync, unzipSync, strToU8 } from 'fflate';
 import localforage from 'localforage';
+import deploymentDefaults from '../../../backend/deployment-defaults.json';
 import { closeImageDb } from '@/lib/image-db';
 import {
     ensureIndexedDbSchema,
@@ -356,9 +357,10 @@ async function exportIndexedDB(files: Record<string, Uint8Array>, onProgress?: P
  * 使用 fflate 替代 JSZip，显著降低内存占用和处理时间
  * @param onProgress 导出进度回调函数。
  * @param appVersion 当前运行时平台版本号，写入备份元数据。
+ * @param appName 当前运行时平台名称，写入备份元数据。
  * @returns 包含全部浏览器数据的 ZIP 文件 Blob。
  */
-export async function exportAllData(onProgress?: ProgressCallback, appVersion: string = '0.0.0'): Promise<Blob> {
+export async function exportAllData(onProgress?: ProgressCallback, appVersion = '0.0.0', appName = deploymentDefaults.platformName): Promise<Blob> {
     if (onProgress) {
         onProgress({ percent: 0, message: 'settings.backupProgressExportStart' });
     }
@@ -386,7 +388,7 @@ export async function exportAllData(onProgress?: ProgressCallback, appVersion: s
         version: appVersion,
         storageContractVersion: STORAGE_CONTRACT_VERSION,
         exportDate: new Date().toISOString(),
-        appName: 'FlyReq Image',
+        appName,
     });
 
     // 添加 localStorage 数据
@@ -844,11 +846,14 @@ export function downloadBlob(blob: Blob, filename: string): void {
 }
 
 /**
- * 生成备份文件名
+ * 用当前平台名称和时间生成备份文件名。
+ * @param appName 当前平台名称。
+ * @returns 可用于下载的 ZIP 文件名。
  */
-export function generateBackupFilename(): string {
+export function generateBackupFilename(appName = deploymentDefaults.platformName): string {
+    const prefix = appName.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, '-').replace(/^-+|-+$/g, '') || 'token-ai-gate';
     const now = new Date();
     const dateStr = now.toISOString().split('T')[0];
     const timeStr = now.toTimeString().split(' ')[0].replace(/:/g, '-');
-    return `flyreq-backup-${dateStr}-${timeStr}.zip`;
+    return `${prefix}-backup-${dateStr}-${timeStr}.zip`;
 }

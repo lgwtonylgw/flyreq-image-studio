@@ -32,7 +32,7 @@ mkdir -p data logs
 
 应用配置写在 `.env`，容器固定监听 `3001`。宿主机默认绑定 `127.0.0.1:3002`，需要换端口时在 `.env` 设置 `FLYREQ_HOST_PORT`，并同步更新 Nginx 的上游端口。部署脚本按本次传入的 digest 给 Compose 设置 `FLYREQ_IMAGE`。
 
-画布默认品牌为 Token AI Gate，模型 API 根地址为 `https://api.tokenaigate.com`，密钥入口为 `https://tokenaigate.com/keys`。镜像会识别旧部署模板中的原始品牌和默认端点。已有 `.env` 可以继续使用，自定义的渠道和已绑定密钥的浏览器模型会保留，用户可在设置里为本站模型填写自己的 API Key。
+画布默认品牌为 Token AI Gate，模型 API 根地址为 `https://api.tokenaigate.com`，密钥入口为 `https://tokenaigate.com/keys`。镜像会识别旧部署模板中的原始品牌、图标路径和默认端点。已有 `.env` 可以继续使用，自定义的渠道和已绑定密钥的浏览器模型会保留，用户可在设置里为本站模型填写自己的 API Key。新图标使用 `/brand/token-ai-gate/` 下的独立路径，更新镜像后可在 `/api/flyreq/config` 和 `/api/flyreq/manifest.webmanifest` 查看生效配置。
 
 如果 GHCR 镜像包是私有的，使用有该包访问权及 `read:packages` 权限的 classic PAT 登录。下面命令通过交互提示读取令牌。
 

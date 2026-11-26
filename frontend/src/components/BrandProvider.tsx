@@ -5,15 +5,19 @@ import deploymentDefaults from '../../../backend/deployment-defaults.json';
 
 export interface PlatformBranding {
   platformName: string;
+  websiteUrl: string;
+  repositoryUrl: string;
   logoUrl: string;
   iconUrl: string;
+  pwaIcon192Url: string;
+  pwaIcon512Url: string;
+  pwaMaskableIcon512Url: string;
   platformVersion: string;
 }
 
 const DEFAULT_PLATFORM_BRANDING: PlatformBranding = {
   platformName: deploymentDefaults.platformName,
-  logoUrl: '/favicon.png',
-  iconUrl: '/favicon.png',
+  ...deploymentDefaults.branding,
   platformVersion: '0.0.0',
 };
 
@@ -26,20 +30,12 @@ const BrandContext = createContext<PlatformBranding>(DEFAULT_PLATFORM_BRANDING);
  */
 function normalizeBranding(value: unknown): PlatformBranding {
   const source = value && typeof value === 'object' ? value as Partial<PlatformBranding> : {};
-  return {
-    platformName: typeof source.platformName === 'string' && source.platformName.trim()
-      ? source.platformName.trim()
-      : DEFAULT_PLATFORM_BRANDING.platformName,
-    logoUrl: typeof source.logoUrl === 'string' && source.logoUrl.trim()
-      ? source.logoUrl.trim()
-      : DEFAULT_PLATFORM_BRANDING.logoUrl,
-    iconUrl: typeof source.iconUrl === 'string' && source.iconUrl.trim()
-      ? source.iconUrl.trim()
-      : DEFAULT_PLATFORM_BRANDING.iconUrl,
-    platformVersion: typeof source.platformVersion === 'string' && source.platformVersion.trim()
-      ? source.platformVersion.trim()
-      : DEFAULT_PLATFORM_BRANDING.platformVersion,
-  };
+  const branding = { ...DEFAULT_PLATFORM_BRANDING };
+  for (const key of Object.keys(branding) as (keyof PlatformBranding)[]) {
+    const value = source[key];
+    if (typeof value === 'string' && value.trim()) branding[key] = value.trim();
+  }
+  return branding;
 }
 
 /**
@@ -49,8 +45,10 @@ function normalizeBranding(value: unknown): PlatformBranding {
  */
 function applyDocumentBranding(branding: PlatformBranding): void {
   document.title = branding.platformName;
-  const iconLinks = document.querySelectorAll<HTMLLinkElement>('link[rel="icon"], link[rel="shortcut icon"], link[rel="apple-touch-icon"]');
+  const iconLinks = document.querySelectorAll<HTMLLinkElement>('link[rel="icon"], link[rel="shortcut icon"]');
   iconLinks.forEach(link => { link.href = branding.iconUrl; });
+  const appleIcons = document.querySelectorAll<HTMLLinkElement>('link[rel="apple-touch-icon"]');
+  appleIcons.forEach(link => { link.href = branding.pwaIcon192Url; });
 }
 
 /**

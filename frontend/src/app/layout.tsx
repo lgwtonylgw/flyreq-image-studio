@@ -11,13 +11,8 @@ export const metadata: Metadata = {
   title: deploymentDefaults.platformName,
   description: `${deploymentDefaults.platformName} AI image generation workspace`,
   icons: {
-    icon: [
-      { url: '/favicon.png', type: 'image/png' },
-      { url: '/icon-192.png', sizes: '192x192', type: 'image/png' },
-      { url: '/icon-512.png', sizes: '512x512', type: 'image/png' },
-    ],
-    shortcut: '/favicon.png',
-    apple: '/icon-192.png',
+    icon: deploymentDefaults.branding.iconUrl,
+    apple: deploymentDefaults.branding.pwaIcon192Url,
   },
   manifest: '/api/flyreq/manifest.webmanifest',
   other: {

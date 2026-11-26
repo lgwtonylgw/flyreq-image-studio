@@ -37,7 +37,8 @@ describe('backend outbound User-Agent', () => {
   const { resolveOutboundUserAgent, createOutboundHeaders } = loadOutboundUserAgentHelpers();
 
   it('uses the stable product identifier when no environment override exists', () => {
-    expect(resolveOutboundUserAgent({})).toBe('FlyReq-Image-Studio/1.5.1');
+    expect(resolveOutboundUserAgent({})).toBe('TokenAIGate-Image-Studio/1.5.1');
+    expect(resolveOutboundUserAgent({ FLYREQ_OUTBOUND_USER_AGENT: 'FlyReq-Image-Studio/3.1.1' })).toBe('TokenAIGate-Image-Studio/1.5.1');
   });
 
   it('uses the configured product identifier and removes HTTP control characters', () => {

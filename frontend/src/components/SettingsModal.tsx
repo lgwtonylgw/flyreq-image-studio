@@ -548,7 +548,7 @@ function getSelectedDefaultModelId<T extends { id: string }>(defaultModelId: str
 
 export function SettingsModal({ isOpen, onClose, onApiKeyChange, externalModelConfig, onExternalModelConfigConsumed }: SettingsModalProps) {
   const { t } = useI18n();
-  const { platformName, platformVersion } = useBranding();
+  const { platformName, platformVersion, websiteUrl, repositoryUrl } = useBranding();
   const [imageModels, setImageModels] = useState<ImageModelConfig[]>([]);
   const [textModels, setTextModels] = useState<TextModelConfig[]>([]);
   const [videoModels, setVideoModels] = useState<VideoModelConfig[]>([]);
@@ -1098,8 +1098,8 @@ export function SettingsModal({ isOpen, onClose, onApiKeyChange, externalModelCo
     setBackupError(null);
     setBackupSuccess(null);
     try {
-      const blob = await exportAllData((progress) => setBackupProgress({ ...progress, message: t(progress.message as Parameters<typeof t>[0], progress.values) }), platformVersion);
-      const filename = generateBackupFilename();
+      const blob = await exportAllData((progress) => setBackupProgress({ ...progress, message: t(progress.message as Parameters<typeof t>[0], progress.values) }), platformVersion, platformName);
+      const filename = generateBackupFilename(platformName);
       downloadBlob(blob, filename);
       setBackupSuccess(t('settings.exportSuccess', { filename }));
     } catch (err) {
@@ -1750,7 +1750,17 @@ export function SettingsModal({ isOpen, onClose, onApiKeyChange, externalModelCo
 
           <TabsContent value="about" className="min-h-0 overflow-y-auto p-4 sm:p-6 space-y-4 mt-0">
             <div className="space-y-4 text-sm">
-              <h3 className="text-lg font-medium">{platformName} <span className="text-xs text-muted-foreground font-normal">v{platformVersion}</span></h3>
+              <div className="space-y-2">
+                <h3 className="break-words text-lg font-medium">{platformName} <span className="text-xs text-muted-foreground font-normal">v{platformVersion}</span></h3>
+                <div className="flex flex-wrap gap-x-4 gap-y-2">
+                  <a href={websiteUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-primary hover:underline">
+                    {t('settings.platformWebsite')} <ExternalLink className="size-3 shrink-0" />
+                  </a>
+                  <a href={repositoryUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-primary hover:underline">
+                    {t('settings.projectRepository')} <ExternalLink className="size-3 shrink-0" />
+                  </a>
+                </div>
+              </div>
               <div className="rounded-lg border border-primary/20 bg-primary/10 p-3">
                 <p className="font-medium text-foreground">{keyGuideTitle}</p>
                 <p className="mt-1 text-sm text-muted-foreground">{keyGuideDescription}</p>
@@ -1830,7 +1840,7 @@ export function SettingsModal({ isOpen, onClose, onApiKeyChange, externalModelCo
                 </summary>
                 <ul className="mt-3 list-disc list-inside space-y-2 text-muted-foreground">
                   <li>
-                    {t('settings.projectRepository')}
+                    {t('settings.upstreamRepository')}
                     {' '}
                     <a href="https://github.com/doudou770/flyreq-image-studio" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-primary hover:underline">
                       doudou770/flyreq-image-studio <ExternalLink className="w-3 h-3" />
