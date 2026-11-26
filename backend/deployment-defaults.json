@@ -1,0 +1,6 @@
+{
+  "platformName": "Token AI Gate",
+  "apiBaseUrl": "https://api.tokenaigate.com",
+  "apiKeysUrl": "https://tokenaigate.com/keys",
+  "legacyApiBaseUrl": "https://flyreq.com"
+}

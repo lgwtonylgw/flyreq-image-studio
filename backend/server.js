@@ -9,6 +9,7 @@ const { WebSocketServer } = require('ws');
 const Busboy = require('busboy');
 const { Readable } = require('stream');
 const { pipeline } = require('stream/promises');
+const deploymentDefaults = require('./deployment-defaults.json');
 const { createXaiImagineRequestInit, getXaiImagineEndpoint } = require('./xai-imagine');
 const { flushDailyFileLogs, installDailyFileLogger, isDailyFileLogEnabled } = require('./daily-file-logger');
 const { createVideoRequest, formatVideoResolution, getCreatedVideoTaskId, getVideoDownloadHeaders, getVideoPollPath, normalizeVideoPollResult } = require('./video-protocols');
@@ -58,14 +59,8 @@ const LIMIT_ERROR_MESSAGES = {
   tooManyPending: '你已有较多任务正在排队或生成，请稍后再提交。',
   notAcceptingTasks: '服务器正在升级维护，暂不接受新任务。未完成任务将继续完成。',
 };
-const DEFAULT_IMAGE_MODEL_KEY_GUIDE = {
-  title: '还没有图片模型 API Key？',
-  description: '默认已为你准备 FlyReq 的 GPT Image 2 图片模型，只需要前往 FlyReq 获取 API Key，填入后保存即可开始生成图片。1元=20张4k图。',
-  ctaLabel: '前往 flyreq.com',
-  url: 'https://flyreq.com',
-};
 const DEFAULT_PLATFORM_BRANDING = {
-  platformName: 'FlyReq Image',
+  platformName: deploymentDefaults.platformName,
   logoUrl: '/favicon.png',
   iconUrl: '/favicon.png',
   pwaIcon192Url: '/icon-192.png',
@@ -76,10 +71,10 @@ const DEFAULT_PLATFORM_BRANDING = {
 const DEFAULT_IMAGE_MODEL_DEPLOYMENT_CONFIG = {
   id: 'flyreq-gpt-image-2',
   protocol: 'openai',
-  name: 'FlyReq',
+  name: deploymentDefaults.platformName,
   modelId: '',
   usesPresetModelId: true,
-  baseUrl: 'https://flyreq.com',
+  baseUrl: deploymentDefaults.apiBaseUrl,
   builtinPreset: 'gpt-image-2',
   maxRefImages: 16,
   maxOutputSize: '4K',
@@ -90,9 +85,9 @@ const DEFAULT_IMAGE_MODEL_DEPLOYMENT_CONFIG = {
 const DEFAULT_VIDEO_MODEL_DEPLOYMENT_CONFIG = {
   id: 'flyreq-sora-2',
   protocol: 'openai',
-  name: 'FlyReq',
+  name: deploymentDefaults.platformName,
   modelId: 'sora-2',
-  baseUrl: 'https://flyreq.com',
+  baseUrl: deploymentDefaults.apiBaseUrl,
 };
 const DEFAULT_VIDEO_WORKSPACE_CONFIG = {
   maxRefImages: 9,
@@ -228,7 +223,7 @@ function appendProtocolApiPath(protocol, baseUrl, apiPath) {
 }
 
 function resolveFlyreqApiBaseUrl() {
-  return normalizeBaseUrl(getRuntimeEnv().FLYREQ_API_BASE_URL) || 'https://api.openai.com';
+  return normalizeBaseUrl(getRuntimeEnv().FLYREQ_API_BASE_URL) || deploymentDefaults.apiBaseUrl;
 }
 
 /**
@@ -389,16 +384,21 @@ function shouldAuthorizeRemoteImageDownload(imageUrl, request, env = getRuntimeE
   return allowedOrigins.has(imageOrigin);
 }
 
+/**
+ * 读取 API Key 指引，并将旧部署模板的上游推广链接替换为本站密钥页。
+ * @param env 合并后的运行时环境变量对象。
+ * @returns 链接与自定义文案，空文案由前端按当前语言展示。
+ */
 function resolveImageModelKeyGuide(env = getRuntimeEnv()) {
-  const title = String(env.FLYREQ_IMAGE_MODEL_KEY_GUIDE_TITLE || '').trim();
-  const description = String(env.FLYREQ_IMAGE_MODEL_KEY_GUIDE_DESCRIPTION || '').trim();
-  const ctaLabel = String(env.FLYREQ_IMAGE_MODEL_KEY_GUIDE_CTA_LABEL || '').trim();
-  const url = String(env.FLYREQ_IMAGE_MODEL_KEY_GUIDE_URL || '').trim();
+  const configuredUrl = String(env.FLYREQ_IMAGE_MODEL_KEY_GUIDE_URL || '').trim();
+  if (normalizeBaseUrl(configuredUrl) === deploymentDefaults.legacyApiBaseUrl) {
+    return { title: '', description: '', ctaLabel: '', url: deploymentDefaults.apiKeysUrl };
+  }
   return {
-    title: title || DEFAULT_IMAGE_MODEL_KEY_GUIDE.title,
-    description: description || DEFAULT_IMAGE_MODEL_KEY_GUIDE.description,
-    ctaLabel: ctaLabel || DEFAULT_IMAGE_MODEL_KEY_GUIDE.ctaLabel,
-    url: url || DEFAULT_IMAGE_MODEL_KEY_GUIDE.url,
+    title: String(env.FLYREQ_IMAGE_MODEL_KEY_GUIDE_TITLE || '').trim(),
+    description: String(env.FLYREQ_IMAGE_MODEL_KEY_GUIDE_DESCRIPTION || '').trim(),
+    ctaLabel: String(env.FLYREQ_IMAGE_MODEL_KEY_GUIDE_CTA_LABEL || '').trim(),
+    url: configuredUrl || deploymentDefaults.apiKeysUrl,
   };
 }
 
@@ -566,6 +566,22 @@ function parseBooleanEnv(value, fallback) {
 }
 
 /**
+ * 解析默认模型的显示名称和端点，兼容已部署的上游原始模板。
+ * @param name 环境变量中的模型显示名称。
+ * @param baseUrl 环境变量中的模型端点。
+ * @param defaults 未配置模型名称或端点时使用的部署默认值。
+ * @returns 默认模型的显示名称和端点。
+ */
+function resolveDefaultModelIdentity(name, baseUrl, defaults) {
+  const configuredName = String(name || '').trim().slice(0, 120);
+  const configuredUrl = String(baseUrl || '').trim().slice(0, 500);
+  if ((!configuredName || configuredName === 'FlyReq') && normalizeBaseUrl(configuredUrl) === deploymentDefaults.legacyApiBaseUrl) {
+    return { name: defaults.name, baseUrl: defaults.baseUrl };
+  }
+  return { name: configuredName || defaults.name, baseUrl: configuredUrl || defaults.baseUrl };
+}
+
+/**
  * 读取部署级首次图片模型配置，不包含 API Key，避免将密钥下发给浏览器。
  * @param env 合并后的运行时环境变量对象。
  * @returns 可安全传递到前端并用于首次初始化的图片模型配置。
@@ -591,10 +607,9 @@ function resolveDefaultImageModelConfig(env = getRuntimeEnv()) {
   return {
     id: String(env.FLYREQ_DEFAULT_IMAGE_MODEL_KEY || '').trim().slice(0, 120) || DEFAULT_IMAGE_MODEL_DEPLOYMENT_CONFIG.id,
     protocol: isXaiImagine ? 'openai' : protocol,
-    name: String(env.FLYREQ_DEFAULT_IMAGE_MODEL_NAME || '').trim().slice(0, 120) || DEFAULT_IMAGE_MODEL_DEPLOYMENT_CONFIG.name,
+    ...resolveDefaultModelIdentity(env.FLYREQ_DEFAULT_IMAGE_MODEL_NAME, env.FLYREQ_DEFAULT_IMAGE_MODEL_BASE_URL, DEFAULT_IMAGE_MODEL_DEPLOYMENT_CONFIG),
     modelId: usesPresetModelId ? '' : configuredModelId,
     usesPresetModelId,
-    baseUrl: String(env.FLYREQ_DEFAULT_IMAGE_MODEL_BASE_URL || '').trim().slice(0, 500) || DEFAULT_IMAGE_MODEL_DEPLOYMENT_CONFIG.baseUrl,
     builtinPreset,
     maxRefImages: isXaiImagine
       ? 1
@@ -649,9 +664,8 @@ function resolveDefaultVideoModelConfig(env = getRuntimeEnv()) {
   return {
     id: String(env.FLYREQ_DEFAULT_VIDEO_MODEL_KEY || '').trim().slice(0, 120) || DEFAULT_VIDEO_MODEL_DEPLOYMENT_CONFIG.id,
     protocol,
-    name: String(env.FLYREQ_DEFAULT_VIDEO_MODEL_NAME || '').trim().slice(0, 120) || DEFAULT_VIDEO_MODEL_DEPLOYMENT_CONFIG.name,
+    ...resolveDefaultModelIdentity(env.FLYREQ_DEFAULT_VIDEO_MODEL_NAME, env.FLYREQ_DEFAULT_VIDEO_MODEL_BASE_URL, DEFAULT_VIDEO_MODEL_DEPLOYMENT_CONFIG),
     modelId: String(env.FLYREQ_DEFAULT_VIDEO_MODEL_MODEL_ID || '').trim().slice(0, 200) || DEFAULT_VIDEO_MODEL_DEPLOYMENT_CONFIG.modelId,
-    baseUrl: String(env.FLYREQ_DEFAULT_VIDEO_MODEL_BASE_URL || '').trim().slice(0, 500) || DEFAULT_VIDEO_MODEL_DEPLOYMENT_CONFIG.baseUrl,
   };
 }
 
@@ -1107,7 +1121,7 @@ function normalizeBrandAssetUrl(value, fallback) {
 function resolvePlatformBranding(env = getRuntimeEnv()) {
   const configuredName = String(env.FLYREQ_PLATFORM_NAME || '').trim().slice(0, 120);
   return {
-    platformName: configuredName || DEFAULT_PLATFORM_BRANDING.platformName,
+    platformName: configuredName && configuredName !== 'FlyReq Image' ? configuredName : DEFAULT_PLATFORM_BRANDING.platformName,
     logoUrl: normalizeBrandAssetUrl(env.FLYREQ_PLATFORM_LOGO_URL, DEFAULT_PLATFORM_BRANDING.logoUrl),
     iconUrl: normalizeBrandAssetUrl(env.FLYREQ_PLATFORM_ICON_URL, DEFAULT_PLATFORM_BRANDING.iconUrl),
     pwaIcon192Url: normalizeBrandAssetUrl(env.FLYREQ_PWA_ICON_192_URL, DEFAULT_PLATFORM_BRANDING.pwaIcon192Url),

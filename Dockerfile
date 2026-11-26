@@ -6,6 +6,7 @@ COPY package.json package-lock.json ./
 COPY frontend/package.json frontend/package-lock.json ./frontend/
 COPY frontend/ ./frontend/
 COPY backend/video-protocol-capabilities.json ./backend/video-protocol-capabilities.json
+COPY backend/deployment-defaults.json ./backend/deployment-defaults.json
 
 RUN cd frontend && npm ci && npm run build
 

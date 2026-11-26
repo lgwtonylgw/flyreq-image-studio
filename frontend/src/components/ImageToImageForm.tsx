@@ -12,6 +12,7 @@ import { Slider } from '@/components/ui/slider';
 import { CustomSizeDialog } from '@/components/CustomSizeDialog';
 import { GptImageAdvancedParamsControl } from '@/components/GptImageAdvancedParamsControl';
 import { MissingApiKeyDialog } from '@/components/MissingApiKeyDialog';
+import { useI18n } from '@/components/LanguageProvider';
 import { QuickPromptDialog } from '@/components/QuickPromptDialog';
 import { PromptOptimizeDialog } from '@/components/PromptOptimizeDialog';
 import { AgentAssetPickerDialog, AgentTextAssetPickerDialog } from '@/components/agent/AgentAssetPickerDialog';
@@ -125,7 +126,8 @@ export function ImageToImageForm({
   const [prompt, setPrompt] = useState('');
   const [pendingFiles, setPendingFiles] = useState<UploadedFile[]>([]);
 
-  const disabledMessage = '请先在设置中配置 FlyReq API 密钥，配置完成后即可开始转换图片。';
+  const { t } = useI18n();
+  const disabledMessage = t('missingApiKey.description');
 
   // 先使用稳定默认值，避免 SSR/CSR 首帧不一致；挂载后再恢复缓存
   const [model, setModel] = useState<ModelId>(() => getDefaultModelId());

@@ -4,11 +4,12 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import Script from "next/script";
 import { ServiceWorkerManager } from "@/components/ServiceWorkerManager";
 import { LOCAL_STORAGE_KEYS } from "@/lib/storage-contract";
+import deploymentDefaults from '../../../backend/deployment-defaults.json';
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "FlyReq Image - AI Image Generator",
-  description: "FlyReq Image AI image generation workspace",
+  title: deploymentDefaults.platformName,
+  description: `${deploymentDefaults.platformName} AI image generation workspace`,
   icons: {
     icon: [
       { url: '/favicon.png', type: 'image/png' },

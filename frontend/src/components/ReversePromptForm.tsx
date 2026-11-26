@@ -1,6 +1,7 @@
 'use client';
 
 import { LOCAL_STORAGE_KEYS } from '@/lib/storage-contract';
+import { useI18n } from '@/components/LanguageProvider';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
@@ -95,6 +96,7 @@ interface ReversePromptFormProps {
 }
 
 export function ReversePromptForm({ wideMode = false, disabled = false, onConfigureApiKey }: ReversePromptFormProps) {
+  const { t } = useI18n();
   const [model, setModel] = useState<ReversePromptModelId>(getDefaultReversePromptModelId());
   const [mode, setMode] = useState<ReversePromptMode>(DEFAULT_REVERSE_MODE);
   const [settingsReady, setSettingsReady] = useState(false);
@@ -418,7 +420,7 @@ export function ReversePromptForm({ wideMode = false, disabled = false, onConfig
               <p className="mt-2 text-sm text-muted-foreground">
                 {textModelMissing
                   ? '请先在设置中完成至少一个文本模型配置，才能使用反推提示词功能。'
-                  : '请先在设置中配置 FlyReq API 密钥，配置完成后即可使用反推提示词功能。'}
+                  : t('settings.configureModelApiKey')}
               </p>
             </div>
             <Button onClick={() => setMissingApiKeyDialogOpen(true)}>配置</Button>

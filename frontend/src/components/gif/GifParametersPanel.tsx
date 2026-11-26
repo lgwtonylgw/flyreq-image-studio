@@ -10,6 +10,7 @@ import {
   X,
 } from 'lucide-react';
 import { Button, buttonVariants } from '@/components/ui/button';
+import { useI18n } from '@/components/LanguageProvider';
 import { Textarea } from '@/components/ui/textarea';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { AttachmentChips } from '@/components/AttachmentChips';
@@ -64,6 +65,7 @@ function formatModelLabel(model: GifModel, modelOptions: { value: GifModel; labe
 }
 
 export function GifParametersPanel(props: GifParametersPanelProps) {
+  const { t } = useI18n();
   if (props.disabled) {
     return (
       <div className="flex min-h-72 flex-col items-center justify-center gap-4 rounded-xl border border-border bg-muted/40 px-4 py-8 text-center">
@@ -73,7 +75,7 @@ export function GifParametersPanel(props: GifParametersPanelProps) {
         <div className="max-w-md">
           <p className="text-base font-medium text-foreground">需要先配置令牌</p>
           <p className="mt-2 text-sm text-muted-foreground">
-            请先在设置中配置 FlyReq API 密钥，才能使用动图生成功能。
+            {t('settings.configureModelApiKey')}
           </p>
         </div>
         <Button onClick={props.onConfigureApiKey}>配置</Button>

@@ -98,15 +98,15 @@ describe('settings-storage model availability', () => {
     });
   });
 
-  it('ships a default FlyReq image model without unlocking image workflows before the key is filled', () => {
+  it('ships a default Token AI Gate image model without unlocking image workflows before the key is filled', () => {
     const registry = loadRegistry();
     expect(registry.imageModels[0]).toMatchObject({
       protocol: 'openai',
-      name: 'FlyReq',
+      name: 'Token AI Gate',
       modelId: '',
       usesPresetModelId: true,
       apiKey: '',
-      baseUrl: 'https://flyreq.com',
+      baseUrl: 'https://api.tokenaigate.com',
       builtinPreset: 'gpt-image-2',
       maxRefImages: 16,
       maxOutputSize: '4K',

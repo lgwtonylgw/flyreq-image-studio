@@ -2,6 +2,7 @@
 
 import { BUILTIN_IMAGE_PRESETS } from '@/lib/builtin-image-presets';
 import { LOCAL_STORAGE_KEYS } from '@/lib/storage-contract';
+import deploymentDefaults from '../../../backend/deployment-defaults.json';
 export { BUILTIN_IMAGE_PRESETS, applyBuiltinImagePresetModelIds } from '@/lib/builtin-image-presets';
 export type { BuiltinImagePreset, BuiltinImagePresetId, BuiltinImagePresetModelIds, ImageOutputSize, ProviderProtocol } from '@/lib/builtin-image-presets';
 import type { BuiltinImagePresetId, ImageOutputSize, ProviderProtocol } from '@/lib/builtin-image-presets';
@@ -85,7 +86,7 @@ export const DEFAULT_TEXT_MODEL_TEMPLATES = [
     protocol: 'openai' as const,
     name: 'GPT 5.4 Mini',
     modelId: 'gpt-5.4-mini',
-    baseUrl: 'https://api.openai.com',
+    baseUrl: deploymentDefaults.apiBaseUrl,
     note: 'OpenAI Response',
   },
   {
@@ -115,11 +116,11 @@ export const DEFAULT_IMAGE_MODELS: ImageModelConfig[] = [
   {
     id: DEFAULT_FLYREQ_IMAGE_MODEL_ID,
     protocol: 'openai',
-    name: 'FlyReq',
+    name: deploymentDefaults.platformName,
     modelId: '',
     usesPresetModelId: true,
     apiKey: '',
-    baseUrl: 'https://flyreq.com',
+    baseUrl: deploymentDefaults.apiBaseUrl,
     builtinPreset: 'gpt-image-2',
     maxRefImages: 16,
     maxOutputSize: '4K',
@@ -132,12 +133,12 @@ export const DEFAULT_IMAGE_MODELS: ImageModelConfig[] = [
 export const DEFAULT_VIDEO_MODELS: VideoModelConfig[] = [{
   id: DEFAULT_FLYREQ_VIDEO_MODEL_ID,
   protocol: 'openai',
-  name: 'FlyReq',
+  name: deploymentDefaults.platformName,
   modelId: '',
   usesPresetModelId: true,
   presetModelId: DEFAULT_VIDEO_GENERATION_MODEL_ID,
   apiKey: '',
-  baseUrl: 'https://flyreq.com',
+  baseUrl: deploymentDefaults.apiBaseUrl,
 }];
 
 /** 部署级下发的首次图片模型配置不携带 API Key。 */
@@ -386,12 +387,26 @@ export function isCompleteVideoModel(model: Partial<VideoModelConfig>): model is
   );
 }
 
+/**
+ * 更新旧版自带且尚未绑定密钥的模型地址，保留用户原有模型能力配置。
+ * @param model 已归一化的本地图片或视频模型。
+ * @param legacyId 旧版内置模型的内部标识。
+ * @param deploymentModel 当前部署下发的默认模型。
+ * @returns 原模型或已切换到本站的默认模型。
+ */
+function migrateLegacyDefaultModel<T extends ImageModelConfig | VideoModelConfig>(model: T, legacyId: string, deploymentModel: T): T {
+  if (model.id !== legacyId || model.name !== 'FlyReq' || model.apiKey
+    || model.baseUrl.replace(/\/+$/, '') !== deploymentDefaults.legacyApiBaseUrl) return model;
+  return { ...model, name: deploymentModel.name, baseUrl: deploymentModel.baseUrl };
+}
+
 function ensureImageModels(raw?: unknown): ImageModelConfig[] {
   if (!Array.isArray(raw)) return getDeploymentDefaultImageModels();
   if (raw.length === 0) return [];
   const models = raw
     .map((item) => normalizeImageModelConfig((item || {}) as Partial<ImageModelConfig>))
     .filter((item): item is ImageModelConfig => Boolean(item))
+    .map(item => migrateLegacyDefaultModel(item, DEFAULT_FLYREQ_IMAGE_MODEL_ID, deploymentDefaultImageModel))
     .filter((item, index, list) => list.findIndex((candidate) => candidate.id === item.id) === index);
   return models.length > 0 ? models : getDeploymentDefaultImageModels();
 }
@@ -418,6 +433,7 @@ function ensureVideoModels(raw?: unknown): VideoModelConfig[] {
       return normalizeVideoModelConfig(candidate);
     })
     .filter((item): item is VideoModelConfig => Boolean(item))
+    .map(item => migrateLegacyDefaultModel(item, DEFAULT_FLYREQ_VIDEO_MODEL_ID, deploymentDefaultVideoModel))
     .filter((item, index, list) => list.findIndex(candidate => candidate.id === item.id) === index);
   return models.length > 0 ? models : getDeploymentDefaultVideoModels();
 }

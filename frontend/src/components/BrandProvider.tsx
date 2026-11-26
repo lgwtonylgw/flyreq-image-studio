@@ -1,6 +1,7 @@
 'use client';
 
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import deploymentDefaults from '../../../backend/deployment-defaults.json';
 
 export interface PlatformBranding {
   platformName: string;
@@ -10,7 +11,7 @@ export interface PlatformBranding {
 }
 
 const DEFAULT_PLATFORM_BRANDING: PlatformBranding = {
-  platformName: 'FlyReq Image',
+  platformName: deploymentDefaults.platformName,
   logoUrl: '/favicon.png',
   iconUrl: '/favicon.png',
   platformVersion: '0.0.0',

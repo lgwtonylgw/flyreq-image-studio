@@ -32,6 +32,8 @@ mkdir -p data logs
 
 应用配置写在 `.env`，容器固定监听 `3001`。宿主机默认绑定 `127.0.0.1:3002`，需要换端口时在 `.env` 设置 `FLYREQ_HOST_PORT`，并同步更新 Nginx 的上游端口。部署脚本按本次传入的 digest 给 Compose 设置 `FLYREQ_IMAGE`。
 
+画布默认品牌为 Token AI Gate，模型 API 根地址为 `https://api.tokenaigate.com`，密钥入口为 `https://tokenaigate.com/keys`。镜像会识别旧部署模板中的原始品牌和默认端点。已有 `.env` 可以继续使用，自定义的渠道和已绑定密钥的浏览器模型会保留，用户可在设置里为本站模型填写自己的 API Key。
+
 如果 GHCR 镜像包是私有的，使用有该包访问权及 `read:packages` 权限的 classic PAT 登录。下面命令通过交互提示读取令牌。
 
 ```bash
@@ -62,26 +64,46 @@ curl -fsS -o /dev/null http://127.0.0.1:3002/
 
 ## 4. 配置 Nginx 和 HTTPS
 
-在 Cloudflare 的 `tokenaigate.com` 区域新增 `A` 记录，名称填 `studio`，地址填部署画布项目的服务器公网 IPv4，TTL 选 Auto。签发源站证书时先使用灰云（DNS only），确认域名已指向服务器且公网能访问源站 80 端口。证书签发成功后切换成橙云（Proxied），SSL/TLS 使用 Full (strict)，WebSockets 保持启用。
+沿用 `pay.tokenaigate.com` 和 `usdt.tokenaigate.com` 的部署方式，为 `studio.tokenaigate.com` 建立独立的宿主机 Nginx 站点。在 Cloudflare 的 `tokenaigate.com` 区域新增 `A` 记录，名称填 `studio`，地址填画布服务器公网 IPv4，代理状态使用橙云（Proxied），SSL/TLS 使用 Full (strict)。采用 Certbot 的 HTTP 验证时，公网 80 端口须可访问。若 Cloudflare 代理影响验证，可在签发期间将 `studio` 切到灰云，确认源站 HTTPS 正常后恢复橙云。
 
-以下命令适用于使用 `/etc/nginx/conf.d/` 的宿主机 Nginx，需要 `envsubst`（Ubuntu/Debian 的 `gettext-base` 包）和 Certbot 的 Nginx 插件。生成画布站点专用的 Cloudflare 信任列表后，Nginx 只接受来自这些网段的 `CF-Connecting-IP`，应用按真实访客 IP 限流。Cloudflare 更新网段后重新生成该配置并重载 Nginx。
+在 `/etc/nginx/sites-available/` 下保存站点配置，通过 `/etc/nginx/sites-enabled/` 的软链接启用。先运行 `sudo nginx -T 2>&1 | grep -nF 'studio.tokenaigate.com'` 检查该域名。若已加载 `studio` 的站点，继续使用现有站点文件，避免加载两个同名站点。下面命令适用于首次配置，需要 `envsubst`（Ubuntu/Debian 的 `gettext-base` 包）和 Certbot 的 Nginx 插件。模板支持画布 WebSocket，并从可信 Cloudflare 网段读取真实访客 IP。Cloudflare 更新网段后重新生成信任列表并重载 Nginx。
 
 ```bash
-cd /data/flyreq-image-studio
-export FLYREQ_DOMAIN=studio.tokenaigate.com
-export FLYREQ_HOST_PORT=3002
-curl -fsS https://www.cloudflare.com/ips-v4 -o cloudflare-v4.txt \
-  && curl -fsS https://www.cloudflare.com/ips-v6 -o cloudflare-v6.txt \
-  && awk 'BEGIN { print "real_ip_header CF-Connecting-IP;" } NF { print "set_real_ip_from " $1 ";" }' \
-       cloudflare-v4.txt cloudflare-v6.txt > flyreq-cloudflare-realip.conf \
-  && sudo install -m 644 flyreq-cloudflare-realip.conf /etc/nginx/flyreq-cloudflare-realip.conf
+(
+  set -e
+  cd /data/flyreq-image-studio
+  export FLYREQ_DOMAIN=studio.tokenaigate.com
+  export FLYREQ_HOST_PORT=3002
+  site="/etc/nginx/sites-available/$FLYREQ_DOMAIN"
+  enabled="/etc/nginx/sites-enabled/$FLYREQ_DOMAIN"
+  if [ -e "$site" ] || [ -L "$site" ] || [ -e "$enabled" ] || [ -L "$enabled" ]; then
+    printf '站点配置或链接已存在，请检查 %s 和 %s\n' "$site" "$enabled" >&2
+    exit 1
+  fi
 
-envsubst '${FLYREQ_DOMAIN} ${FLYREQ_HOST_PORT}' < scripts/flyreq-nginx.conf.template \
-  > flyreq-image-studio.conf \
-  && sudo install -m 644 flyreq-image-studio.conf /etc/nginx/conf.d/flyreq-image-studio.conf \
-  && sudo nginx -t \
-  && sudo systemctl reload nginx \
-  && sudo certbot --nginx -d "$FLYREQ_DOMAIN"
+  curl -fsS https://www.cloudflare.com/ips-v4 -o cloudflare-v4.txt
+  curl -fsS https://www.cloudflare.com/ips-v6 -o cloudflare-v6.txt
+  awk 'BEGIN { print "real_ip_header CF-Connecting-IP;" } NF { print "set_real_ip_from " $1 ";" }' \
+    cloudflare-v4.txt cloudflare-v6.txt > flyreq-cloudflare-realip.conf
+  sudo install -m 644 flyreq-cloudflare-realip.conf /etc/nginx/flyreq-cloudflare-realip.conf
+
+  envsubst '${FLYREQ_DOMAIN} ${FLYREQ_HOST_PORT}' < scripts/flyreq-nginx.conf.template > flyreq-image-studio.conf
+  sudo install -m 644 flyreq-image-studio.conf "$site"
+  sudo ln -s "$site" "$enabled"
+  sudo nginx -t
+  sudo systemctl reload nginx
+  sudo certbot --nginx -d "$FLYREQ_DOMAIN"
+)
 ```
 
-部署后打开 `https://studio.tokenaigate.com/#canvas`，确认直接进入画布。生成任务时检查浏览器网络面板的 `/api/flyreq/ws` 是否返回 `101 Switching Protocols`。通过一次参考图上传验证请求体限制和图片生成链路。New API 的侧栏使用同一地址，改域名时同步更新 New API 容器的 `INFINITE_CANVAS_URL`。
+签发后从服务器验证源站，再验证公网域名：
+
+```bash
+curl -fsS --resolve studio.tokenaigate.com:443:127.0.0.1 \
+  -o /dev/null -w 'Origin HTTP %{http_code}\n' \
+  https://studio.tokenaigate.com/api/flyreq/config
+curl -fsS -o /dev/null -w 'Public HTTP %{http_code}\n' \
+  https://studio.tokenaigate.com/api/flyreq/config
+```
+
+打开 `https://studio.tokenaigate.com/#canvas`，确认直接进入画布。生成任务时检查浏览器网络面板的 `/api/flyreq/ws` 是否返回 `101 Switching Protocols`。通过一次参考图上传验证请求体限制和图片生成链路。New API 的侧栏使用同一地址，改域名时同步更新 New API 容器的 `INFINITE_CANVAS_URL`。

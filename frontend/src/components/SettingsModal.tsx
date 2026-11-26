@@ -76,7 +76,8 @@ import { checkModelsAvailability, fetchRemoteModels, type ModelStatus, type Remo
 import { hasConfiguredImageModel, isPromptOptimizeEnabled, setPromptOptimizeEnabled } from '@/lib/settings-storage';
 import { saveFirstImageModelAsFormDefault } from '@/lib/form-settings';
 import { notifyImageModelDefaultUpdated } from '@/hooks/useImageModelDefaultRefresh';
-import { BA_RANDOM_URL, BING_WALLPAPER_URL, IMAGE_MODEL_KEY_GUIDE } from '@/lib/constants';
+import { BA_RANDOM_URL, BING_WALLPAPER_URL } from '@/lib/constants';
+import deploymentDefaults from '../../../backend/deployment-defaults.json';
 import { PROMPT_DATA_SOURCES, getPromptSourceLabel } from '@/lib/prompt-gallery-data';
 import { getOutputSizeLabel } from '@/lib/model-capabilities';
 import { getVideoProtocolConfig } from '@/lib/video-config';
@@ -85,7 +86,7 @@ import { useBranding } from '@/components/BrandProvider';
 import { useI18n } from '@/components/LanguageProvider';
 import { clearModelCatalogCache, getModelCatalogCache, isModelCatalogCacheStale, loadModelCatalogCache, pruneModelCatalogCache, saveModelCatalogCache } from '@/lib/model-catalog-cache';
 
-type ImageModelKeyGuide = typeof IMAGE_MODEL_KEY_GUIDE;
+type ImageModelKeyGuide = { title?: string; description?: string; ctaLabel?: string; url?: string };
 
 /**
  * 从后端下发的协议能力配置读取设置页模板。
@@ -317,7 +318,7 @@ function createImageModelDraft(): ImageModelConfig {
     modelId: '',
     usesPresetModelId: true,
     apiKey: '',
-    baseUrl: preset.baseUrl,
+    baseUrl: deploymentDefaults.apiBaseUrl,
     builtinPreset: preset.id,
     maxRefImages: preset.maxRefImages,
     maxOutputSize: preset.maxOutputSize,
@@ -566,7 +567,11 @@ export function SettingsModal({ isOpen, onClose, onApiKeyChange, externalModelCo
   const [showTextApiKey, setShowTextApiKey] = useState(false);
   const [showVideoApiKey, setShowVideoApiKey] = useState(false);
   const [promptOptimizeEnabled, setPromptOptimizeEnabledState] = useState(false);
-  const [imageModelKeyGuide, setImageModelKeyGuide] = useState<ImageModelKeyGuide>(IMAGE_MODEL_KEY_GUIDE);
+  const [imageModelKeyGuide, setImageModelKeyGuide] = useState<ImageModelKeyGuide>({});
+  const keyGuideTitle = imageModelKeyGuide.title || t('settings.imageModelKeyGuideTitle');
+  const keyGuideDescription = imageModelKeyGuide.description || t('settings.imageModelKeyGuideDescription');
+  const keyGuideCta = imageModelKeyGuide.ctaLabel || t('settings.imageModelKeyGuideCta');
+  const keyGuideUrl = imageModelKeyGuide.url || deploymentDefaults.apiKeysUrl;
   const [initialSnapshot, setInitialSnapshot] = useState<string | null>(null);
   const [closeConfirmOpen, setCloseConfirmOpen] = useState(false);
   const [saveState, setSaveState] = useState<'idle' | 'saved'>('idle');
@@ -651,16 +656,10 @@ export function SettingsModal({ isOpen, onClose, onApiKeyChange, externalModelCo
       .then((data: { imageModelKeyGuide?: Partial<ImageModelKeyGuide>; imagePresetModelIds?: Parameters<typeof applyBuiltinImagePresetModelIds>[0] }) => {
         if (cancelled) return;
         applyBuiltinImagePresetModelIds(data.imagePresetModelIds);
-        const guide = data.imageModelKeyGuide || {};
-        setImageModelKeyGuide({
-          title: guide.title || IMAGE_MODEL_KEY_GUIDE.title,
-          description: guide.description || IMAGE_MODEL_KEY_GUIDE.description,
-          ctaLabel: guide.ctaLabel || IMAGE_MODEL_KEY_GUIDE.ctaLabel,
-          url: guide.url || IMAGE_MODEL_KEY_GUIDE.url,
-        });
+        setImageModelKeyGuide(data.imageModelKeyGuide || {});
       })
       .catch(() => {
-        if (!cancelled) setImageModelKeyGuide(IMAGE_MODEL_KEY_GUIDE);
+        if (!cancelled) setImageModelKeyGuide({});
       });
 
     return () => { cancelled = true; };
@@ -1243,17 +1242,17 @@ export function SettingsModal({ isOpen, onClose, onApiKeyChange, externalModelCo
                     <KeyRound className="h-4 w-4" />
                   </div>
                   <div className="space-y-1">
-                    <p className="font-medium text-foreground">{imageModelKeyGuide.title}</p>
-                    <p className="text-muted-foreground">{imageModelKeyGuide.description}</p>
+                    <p className="font-medium text-foreground">{keyGuideTitle}</p>
+                    <p className="text-muted-foreground">{keyGuideDescription}</p>
                   </div>
                 </div>
                 <a
-                  href={imageModelKeyGuide.url}
+                  href={keyGuideUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className={buttonVariants({ className: 'shrink-0 gap-2' })}
                 >
-                  {imageModelKeyGuide.ctaLabel}
+                  {keyGuideCta}
                   <ExternalLink className="h-4 w-4" />
                 </a>
               </div>
@@ -1753,15 +1752,15 @@ export function SettingsModal({ isOpen, onClose, onApiKeyChange, externalModelCo
             <div className="space-y-4 text-sm">
               <h3 className="text-lg font-medium">{platformName} <span className="text-xs text-muted-foreground font-normal">v{platformVersion}</span></h3>
               <div className="rounded-lg border border-primary/20 bg-primary/10 p-3">
-                <p className="font-medium text-foreground">{imageModelKeyGuide.title}</p>
-                <p className="mt-1 text-sm text-muted-foreground">{imageModelKeyGuide.description}</p>
+                <p className="font-medium text-foreground">{keyGuideTitle}</p>
+                <p className="mt-1 text-sm text-muted-foreground">{keyGuideDescription}</p>
                 <a
-                  href={imageModelKeyGuide.url}
+                  href={keyGuideUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="mt-2 inline-flex items-center gap-1 text-primary hover:underline"
                 >
-                  {imageModelKeyGuide.ctaLabel}
+                  {keyGuideCta}
                   <ExternalLink className="w-3 h-3" />
                 </a>
               </div>
